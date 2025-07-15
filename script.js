@@ -9,6 +9,11 @@ function formatPhoneNumber(num) {
   return '+' + num;
 }
 
+// Tambahkan padding nol di depan nomor
+function padNumber(num, totalLength) {
+  return num.toString().padStart(totalLength, '0');
+}
+
 document.getElementById("txtFileInput").addEventListener("change", function () {
   const file = this.files[0];
   if (!file) return;
@@ -48,6 +53,9 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
     .map((n) => formatPhoneNumber(n.trim()))
     .filter((n) => n);
 
+  const totalKontak = numbers.length;
+  const digitLength = totalKontak.toString().length;
+
   const chunks = [];
   for (let i = 0; i < numbers.length; i += contactsPerFile) {
     chunks.push(numbers.slice(i, i + contactsPerFile));
@@ -67,24 +75,27 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
       const localIndex = idx + 1;
       const globalIndex = chunkIndex * contactsPerFile + idx + 1;
 
+      const formattedLocal = padNumber(localIndex, digitLength);
+      const formattedGlobal = padNumber(globalIndex, digitLength);
+
       let contactName = "";
 
       if (useCustomName) {
         if (nameBase) {
-          contactName = `${parseWithSpasi(nameBase)} ${fileName} ${fileIndex} ${additionalFileName} ${localIndex}`.trim();
+          contactName = `${parseWithSpasi(nameBase)} ${fileName} ${fileIndex} ${additionalFileName} ${formattedLocal}`.trim();
         } else {
-          contactName = `${fileName} ${fileIndex} ${additionalFileName} ${localIndex}`.trim();
+          contactName = `${fileName} ${fileIndex} ${additionalFileName} ${formattedLocal}`.trim();
         }
       } else {
         contactName = nameBase
-          ? `${parseWithSpasi(nameBase)} ${globalIndex}`
-          : `kontak ${globalIndex}`;
+          ? `${parseWithSpasi(nameBase)} ${formattedGlobal}`
+          : `kontak ${formattedGlobal}`;
       }
 
       vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${contactName}\nTEL:${number}\nEND:VCARD\n`;
     });
 
-    // Tambahkan ke halaman
+    // Tampilkan link download file
     const blob = new Blob([vcfContent], { type: "text/vcard" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -93,11 +104,11 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
     outputDiv.appendChild(link);
     outputDiv.appendChild(document.createElement("br"));
 
-    // Tambahkan ke ZIP
+    // Tambahkan ke file zip
     zip.file(`${currentFileName}.vcf`, vcfContent);
   });
 
-  // Buat tombol download ZIP
+  // Buat ZIP
   const zipBlob = await zip.generateAsync({ type: "blob" });
   const zipLink = document.createElement("a");
 
