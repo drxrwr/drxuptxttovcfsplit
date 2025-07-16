@@ -39,7 +39,7 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
   let startNumber = parseInt(document.getElementById("startNumberInput").value);
   if (isNaN(startNumber)) startNumber = 1;
 
-  const fileName = parseWithSpasi(document.getElementById("splitFileNameInput").value);
+  const fileNameRaw = document.getElementById("splitFileNameInput").value;
   const additionalFileName = parseWithSpasi(document.getElementById("additionalFileNameInput").value);
   const useCustomName = document.getElementById("customNameCheckbox").checked;
 
@@ -68,7 +68,9 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
 
   chunks.forEach((chunk, chunkIndex) => {
     const fileIndex = startNumber + chunkIndex;
-    const currentFileName = `${fileName} ${fileIndex}${additionalFileName ? " " + additionalFileName : ""}`.trim();
+    const parsedFileName = parseWithSpasi(fileNameRaw).trimEnd(); // Hapus spasi belakang
+    const currentFileName = `${parsedFileName}${fileIndex}${additionalFileName ? " " + additionalFileName : ""}`.trim();
+
     let vcfContent = "";
 
     chunk.forEach((number, idx) => {
@@ -81,11 +83,8 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
       let contactName = "";
 
       if (useCustomName) {
-        if (nameBase) {
-          contactName = `${parseWithSpasi(nameBase)} ${fileName} ${fileIndex} ${additionalFileName} ${formattedLocal}`.trim();
-        } else {
-          contactName = `${fileName} ${fileIndex} ${additionalFileName} ${formattedLocal}`.trim();
-        }
+        const parsedNameFile = parseWithSpasi(fileNameRaw).trimEnd();
+        contactName = `${parseWithSpasi(nameBase)} ${parsedNameFile}${fileIndex} ${additionalFileName} ${formattedLocal}`.trim();
       } else {
         contactName = nameBase
           ? `${parseWithSpasi(nameBase)} ${formattedGlobal}`
@@ -113,7 +112,7 @@ document.getElementById("splitVCFButton").addEventListener("click", async functi
   const zipLink = document.createElement("a");
 
   const lastFileIndex = startNumber + chunks.length - 1;
-  const zipFileName = `${fileName} ${startNumber}-${lastFileIndex}${additionalFileName ? " " + additionalFileName : ""}`.trim().replace(/\s+/g, "_");
+  const zipFileName = `${parseWithSpasi(fileNameRaw).trimEnd()}${startNumber}-${lastFileIndex}${additionalFileName ? " " + additionalFileName : ""}`.replace(/\s+/g, "_");
 
   zipLink.href = URL.createObjectURL(zipBlob);
   zipLink.download = `${zipFileName}.zip`;
